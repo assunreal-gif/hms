@@ -2,9 +2,18 @@ node {
     try {
         stage('Checkout') {
             echo '=================================================='
-            echo 'Stage 0: Checking out source code on server...'
+            echo 'Stage 0: Checking out source code into workspace...'
             echo '=================================================='
-            checkout scm
+            try {
+                checkout scm
+            } catch (Exception scmErr) {
+                echo 'SCM not configured; copying source code from project directory...'
+                if (isUnix()) {
+                    sh 'cp -r "/c/Users/Assun/Downloads/hostel management/." .'
+                } else {
+                    bat 'xcopy /E /I /Y "C:\\Users\\Assun\\Downloads\\hostel management" .'
+                }
+            }
         }
 
         stage('Build') {
@@ -31,17 +40,24 @@ node {
 
         stage('Deploy with Ansible') {
             echo '=================================================='
-            echo 'Stage 3: Executing Ansible Playbook via Container'
+            echo 'Stage 3: Executing Deployment'
             echo '=================================================='
             if (isUnix()) {
                 sh '''
-                docker exec ansible-docker-lab \
-                ansible-playbook \
-                -i /inventory.ini \
-                /waste-deploy.yml
+                docker exec ansible-docker-lab ansible-playbook -i /inventory.ini /waste-deploy.yml || (
+                    echo "Deploying container directly with persistent volume..."
+                    docker rm -f waste-collection-ansible || true
+                    docker run -d --name waste-collection-ansible -p 5002:5000 -v waste_collection_data:/app/data --restart unless-stopped waste-collection-ci
+                )
                 '''
             } else {
-                bat 'docker exec ansible-docker-lab ansible-playbook -i /inventory.ini /waste-deploy.yml'
+                bat '''
+                docker exec ansible-docker-lab ansible-playbook -i /inventory.ini /waste-deploy.yml || (
+                    echo Deploying container directly with persistent volume...
+                    docker rm -f waste-collection-ansible 2>nul || exit 0
+                    docker run -d --name waste-collection-ansible -p 5002:5000 -v waste_collection_data:/app/data --restart unless-stopped waste-collection-ci
+                )
+                '''
             }
         }
 

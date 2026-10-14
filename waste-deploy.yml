@@ -1,0 +1,20 @@
+---
+- name: Deploy Hostel Waste Collection Tracking System Container
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure persistent Docker volume exists for SQLite database
+      community.docker.docker_volume:
+        name: waste_collection_data
+        state: present
+
+    - name: Deploy or update Waste Collection application container
+      community.docker.docker_container:
+        name: waste-collection-ansible
+        image: waste-collection-ci
+        state: "{{ container_state | default('started') }}"
+        restart_policy: unless-stopped
+        ports:
+          - "5002:5000"
+        volumes:
+          - waste_collection_data:/app/data

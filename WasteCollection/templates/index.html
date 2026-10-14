@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Hostel Waste Collection Tracking{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="hero-tag">
+            <span class="pulse-dot"></span>
+            Hostel Management System &bull; EcoClean Initiative
+        </div>
+        <h1 class="hero-title">
+            Smart &amp; Sustainable <br>
+            <span class="text-gradient">Hostel Waste Management</span>
+        </h1>
+        <p class="hero-subtitle">
+            An automated campus waste collection and tracking platform. Report waste from hostel rooms, corridors, and dining halls, monitor resolution in real time, and streamline campus sanitation.
+        </p>
+
+        <div class="hero-actions">
+            <a href="{{ url_for('report') }}" class="btn btn-primary btn-lg">
+                <span>➕</span> Report Waste Collection
+            </a>
+            <a href="{{ url_for('track') }}" class="btn btn-secondary btn-lg">
+                <span>🔍</span> Track Submitted Request
+            </a>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline btn-lg">
+                <span>⚙️</span> Admin Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Search Widget -->
+    <div class="hero-card-wrapper">
+        <div class="card search-quick-card">
+            <h3>⚡ Quick Status Lookup</h3>
+            <p>Have a Request ID? Check its live progress instantly:</p>
+            <form action="{{ url_for('track') }}" method="GET" class="quick-track-form">
+                <div class="input-group">
+                    <span class="input-icon">#</span>
+                    <input type="number" name="id" placeholder="e.g. 101" required min="1">
+                    <button type="submit" class="btn btn-primary">Track</button>
+                </div>
+            </form>
+            <div class="quick-status-badges">
+                <span class="badge badge-pending">Pending</span>
+                <span class="badge badge-assigned">Assigned</span>
+                <span class="badge badge-collected">Collected</span>
+                <span class="badge badge-completed">Completed</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Summary Counters Section -->
+<section class="stats-section">
+    <div class="section-header">
+        <h2 class="section-title">Live Hostel Waste Operations</h2>
+        <p class="section-desc">Real-time statistics queried directly from the persistent SQLite database</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon total-icon">📦</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ summary.total }}</div>
+                <div class="stat-label">Total Requests</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon pending-icon">⏳</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ summary.pending }}</div>
+                <div class="stat-label">Pending Action</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon assigned-icon">👷</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ summary.assigned }}</div>
+                <div class="stat-label">Staff Assigned</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon completed-icon">✅</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ summary.completed }}</div>
+                <div class="stat-label">Resolved &amp; Closed</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- System Roles & Workflow -->
+<section class="features-section">
+    <div class="section-header">
+        <h2 class="section-title">Hostel Roles &amp; Responsibilities</h2>
+        <p class="section-desc">Designed with clear separation of duties for students and administration</p>
+    </div>
+
+    <div class="grid-2col">
+        <!-- Resident Card -->
+        <div class="card role-card">
+            <div class="role-badge role-resident">👤 Resident / Student Role</div>
+            <h3>Hostel Resident Portal</h3>
+            <p>Students and residents can effortlessly report accumulated waste across hostel facilities.</p>
+            <ul class="role-features">
+                <li><span>✓</span> Report waste in rooms, corridors, study halls, or mess</li>
+                <li><span>✓</span> Categorize by Organic, Plastic, E-Waste, or Household</li>
+                <li><span>✓</span> Set urgency priorities (Low, Medium, High, Urgent)</li>
+                <li><span>✓</span> Receive unique Request ID for transparent tracking</li>
+            </ul>
+            <a href="{{ url_for('report') }}" class="btn btn-primary btn-block">Go to Waste Reporting &rarr;</a>
+        </div>
+
+        <!-- Admin Card -->
+        <div class="card role-card">
+            <div class="role-badge role-admin">🛡️ Hostel Admin Role</div>
+            <h3>Superintendent / Sanitation Desk</h3>
+            <p>Hostel wardens and maintenance supervisors oversee and assign collection tasks.</p>
+            <ul class="role-features">
+                <li><span>✓</span> Centralized dashboard of all hostel waste requests</li>
+                <li><span>✓</span> Inspect location, waste category, and urgency level</li>
+                <li><span>✓</span> Update lifecycle: Pending &rarr; Assigned &rarr; Collected &rarr; Completed</li>
+                <li><span>✓</span> Complete audit trail with timestamps and SQLite persistence</li>
+            </ul>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline btn-block">Open Admin Dashboard &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Waste Categories Section -->
+<section class="categories-section">
+    <div class="section-header">
+        <h2 class="section-title">Accepted Waste Streams</h2>
+        <p class="section-desc">Segregate waste at source to maintain a clean and hygienic campus environment</p>
+    </div>
+
+    <div class="categories-grid">
+        <div class="category-card">
+            <div class="cat-icon">🍎</div>
+            <h4>Organic Waste</h4>
+            <p>Food leftovers, dining mess peelings, biodegradable pantry discards.</p>
+        </div>
+        <div class="category-card">
+            <div class="cat-icon">🥤</div>
+            <h4>Plastic Waste</h4>
+            <p>PET water bottles, food packaging wraps, wrappers, cartons.</p>
+        </div>
+        <div class="category-card">
+            <div class="cat-icon">💻</div>
+            <h4>E-Waste</h4>
+            <p>Broken chargers, cables, circuit components, batteries, keyboards.</p>
+        </div>
+        <div class="category-card">
+            <div class="cat-icon">📦</div>
+            <h4>Household Waste</h4>
+            <p>Room sweepings, paper, cartons, study stationery, miscellaneous.</p>
+        </div>
+        <div class="category-card">
+            <div class="cat-icon">🧱</div>
+            <h4>Construction Waste</h4>
+            <p>Tiles, wood fixtures, paint scraps, hostel repair debris.</p>
+        </div>
+        <div class="category-card">
+            <div class="cat-icon">♻️</div>
+            <h4>Other Debris</h4>
+            <p>Non-classified general debris, bulk packaging, seasonal items.</p>
+        </div>
+    </div>
+</section>
+
+<!-- DevOps Demonstration Architecture Banner -->
+<section class="devops-showcase">
+    <div class="devops-card">
+        <div class="devops-header">
+            <span class="devops-tag">Lab Demonstration</span>
+            <h3>DevOps CI/CD &amp; Infrastructure Pipeline</h3>
+        </div>
+        <p>This project is deployed and orchestrated using industry-standard DevOps tools:</p>
+
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-title">Git / GitHub</div>
+                <div class="step-sub">Version Control</div>
+            </div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-title">Jenkins CI</div>
+                <div class="step-sub">Automated Pipeline</div>
+            </div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-title">Docker &amp; Pytest</div>
+                <div class="step-sub">Build &amp; Test Suite</div>
+            </div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">
+                <div class="step-num">4</div>
+                <div class="step-title">Ansible Playbook</div>
+                <div class="step-sub">Zero-Touch Deploy</div>
+            </div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-step">
+                <div class="step-num">5</div>
+                <div class="step-title">Docker Volume</div>
+                <div class="step-sub">SQLite Persistence</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

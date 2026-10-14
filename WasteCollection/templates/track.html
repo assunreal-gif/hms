@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Waste Request - Hostel Management{% endblock %}
+
+{% block content %}
+<div class="page-container track-page-container">
+    <div class="track-header text-center">
+        <span class="badge badge-resident">Status Tracker</span>
+        <h1 class="page-title">Track Waste Collection Request</h1>
+        <p class="page-subtitle">
+            Enter your unique Request ID to see real-time dispatch updates and current resolution stage.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="track-search-box">
+            <form action="{{ url_for('track') }}" method="GET" class="track-form">
+                <div class="search-input-group">
+                    <span class="search-prefix">Request #</span>
+                    <input 
+                        type="number" 
+                        name="id" 
+                        id="trackIdInput" 
+                        placeholder="e.g. 1" 
+                        value="{{ searched_id if searched_id else '' }}" 
+                        required 
+                        min="1"
+                    >
+                    <button type="submit" class="btn btn-primary">
+                        <span>🔍</span> Check Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if request_data %}
+        <!-- Request Status Display Card -->
+        <div class="card track-result-card">
+            <div class="track-card-top">
+                <div class="ticket-meta">
+                    <span class="ticket-id">Request #{{ request_data['id'] }}</span>
+                    <span class="ticket-date">Filed on: {{ request_data['created_at'] }}</span>
+                </div>
+                <div class="ticket-badge-group">
+                    <span class="badge badge-priority badge-{{ request_data['priority']|lower }}">
+                        Priority: {{ request_data['priority'] }}
+                    </span>
+                    <span class="badge badge-status badge-{{ request_data['status']|lower }}">
+                        {{ request_data['status'] }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stepper Progress Visualization -->
+            {% set current_status = request_data['status'] %}
+            {% set steps = ['Pending', 'Assigned', 'Collected', 'Completed'] %}
+            {% set status_index = {
+                'Pending': 1,
+                'Assigned': 2,
+                'Collected': 3,
+                'Completed': 4
+            } %}
+            {% set current_idx = status_index.get(current_status, 1) %}
+
+            <div class="stepper-wrapper">
+                <div class="stepper">
+                    <div class="step {% if current_idx >= 1 %}active{% endif %} {% if current_idx > 1 %}completed{% endif %}">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Pending</div>
+                        <div class="step-sub">Logged in DB</div>
+                    </div>
+                    <div class="step-line {% if current_idx >= 2 %}filled{% endif %}"></div>
+
+                    <div class="step {% if current_idx >= 2 %}active{% endif %} {% if current_idx > 2 %}completed{% endif %}">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Assigned</div>
+                        <div class="step-sub">Staff Dispatched</div>
+                    </div>
+                    <div class="step-line {% if current_idx >= 3 %}filled{% endif %}"></div>
+
+                    <div class="step {% if current_idx >= 3 %}active{% endif %} {% if current_idx > 3 %}completed{% endif %}">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Collected</div>
+                        <div class="step-sub">Waste Cleared</div>
+                    </div>
+                    <div class="step-line {% if current_idx >= 4 %}filled{% endif %}"></div>
+
+                    <div class="step {% if current_idx >= 4 %}active{% endif %}">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Completed</div>
+                        <div class="step-sub">Verified &amp; Closed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Details Grid -->
+            <div class="ticket-details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Waste Type</span>
+                    <span class="detail-value highlight-val">
+                        <span class="cat-pill">{{ request_data['waste_type'] }}</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Hostel Location</span>
+                    <span class="detail-value">📍 {{ request_data['location'] }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Current Stage</span>
+                    <span class="detail-value">
+                        <strong class="text-{{ request_data['status']|lower }}">{{ request_data['status'] }}</strong>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Urgency Priority</span>
+                    <span class="detail-value">{{ request_data['priority'] }}</span>
+                </div>
+                <div class="detail-item full-width">
+                    <span class="detail-label">Description &amp; Notes</span>
+                    <p class="detail-desc">{{ request_data['description'] }}</p>
+                </div>
+            </div>
+
+            <div class="ticket-actions">
+                <a href="{{ url_for('report') }}" class="btn btn-secondary">Report Another Request</a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline">Back to Home</a>
+            </div>
+        </div>
+
+    {% elif not_found %}
+        <!-- Not Found Notice -->
+        <div class="card not-found-card text-center">
+            <div class="not-found-icon">❓</div>
+            <h3>Request Not Found</h3>
+            <p>
+                We could not find any collection request matching Request ID 
+                <strong>#{{ searched_id }}</strong> in the SQLite database.
+            </p>
+            <p class="help-text">Please verify the ticket number from your submission confirmation.</p>
+            <div class="actions">
+                <a href="{{ url_for('report') }}" class="btn btn-primary">File New Request</a>
+            </div>
+        </div>
+    {% else %}
+        <!-- Empty State Prompt -->
+        <div class="card empty-track-prompt text-center">
+            <div class="prompt-icon">📋</div>
+            <h3>Looking for an active ticket?</h3>
+            <p>Enter the ticket ID you received when submitting your request above to see its current progress.</p>
+            <div class="actions-inline">
+                <a href="{{ url_for('report') }}" class="btn btn-primary">Report Waste Now</a>
+                <a href="{{ url_for('admin') }}" class="btn btn-outline">Go to Admin Table</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

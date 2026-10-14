@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Waste Collection - Hostel Management{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="form-wrapper">
+        <div class="form-header">
+            <a href="{{ url_for('index') }}" class="back-link">&larr; Back to Home</a>
+            <span class="badge badge-resident">Resident Portal</span>
+            <h1 class="page-title">Report Waste for Collection</h1>
+            <p class="page-subtitle">
+                Submit an on-demand waste removal ticket for your hostel room, wing, or common area. A unique Request ID will be generated upon submission.
+            </p>
+        </div>
+
+        <form action="{{ url_for('submit_request') }}" method="POST" class="styled-form" id="wasteReportForm">
+            <!-- Waste Type Selection -->
+            <div class="form-group">
+                <label for="waste_type" class="form-label">
+                    <span class="label-icon">🗑️</span> Waste Classification <span class="required">*</span>
+                </label>
+                <select name="waste_type" id="waste_type" class="form-select" required>
+                    <option value="" disabled selected>-- Select Type of Waste --</option>
+                    {% for wt in waste_types %}
+                        <option value="{{ wt }}">{{ wt }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-help">Select the predominant category to dispatch the appropriate collection bin.</small>
+            </div>
+
+            <!-- Location / Address -->
+            <div class="form-group">
+                <label for="location" class="form-label">
+                    <span class="label-icon">📍</span> Hostel Location / Address <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="location" 
+                    id="location" 
+                    class="form-input" 
+                    placeholder="e.g. Block-B, Room 304 / 2nd Floor Corridor / Mess Backdoor" 
+                    required 
+                    minlength="3"
+                >
+                <small class="form-help">Be specific so the campus sanitation staff can locate the waste easily.</small>
+            </div>
+
+            <!-- Priority Level -->
+            <div class="form-group">
+                <label for="priority" class="form-label">
+                    <span class="label-icon">⚡</span> Collection Priority <span class="required">*</span>
+                </label>
+                <div class="priority-selector">
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="Low">
+                        <span class="priority-chip chip-low">Low</span>
+                    </label>
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="Medium" checked>
+                        <span class="priority-chip chip-medium">Medium</span>
+                    </label>
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="High">
+                        <span class="priority-chip chip-high">High</span>
+                    </label>
+                    <label class="priority-option">
+                        <input type="radio" name="priority" value="Urgent">
+                        <span class="priority-chip chip-urgent">Urgent</span>
+                    </label>
+                </div>
+                <small class="form-help">Mark 'Urgent' if biohazard, spill, food spoilage odor, or blocking passages.</small>
+            </div>
+
+            <!-- Short Description -->
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    <span class="label-icon">📝</span> Description / Details <span class="required">*</span>
+                </label>
+                <textarea 
+                    name="description" 
+                    id="description" 
+                    rows="4" 
+                    class="form-textarea" 
+                    placeholder="Provide details about volume, packaging (e.g. 2 heavy bags of carton boxes), or specific hazards..." 
+                    required 
+                    minlength="5"
+                ></textarea>
+                <div class="char-count" id="charCounter">0 / 500 characters</div>
+            </div>
+
+            <!-- Submission Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <span>🚀</span> Submit Collection Request
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Helpful Tips Sidebar Card -->
+    <aside class="sidebar-tips">
+        <div class="card tips-card">
+            <h3>💡 Resident Tips</h3>
+            <ul class="tips-list">
+                <li>
+                    <strong>Tie Bags Firmly:</strong> Keep plastic bags or cartons securely sealed before reporting.
+                </li>
+                <li>
+                    <strong>E-Waste Protocol:</strong> Ensure phone batteries or glass parts are wrapped safely.
+                </li>
+                <li>
+                    <strong>Instant Tracking:</strong> As soon as you hit submit, an ID is created and saved in the SQLite database.
+                </li>
+                <li>
+                    <strong>Turnaround Time:</strong> Standard requests are cleared within 2 hours by hostel facilities.
+                </li>
+            </ul>
+
+            <div class="persistence-notice">
+                <span class="notice-icon">💾</span>
+                <div>
+                    <strong>Data Persistence:</strong>
+                    <p>All tickets are committed to <code>data/waste_collection.db</code> mounted via Docker volume.</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const desc = document.getElementById('description');
+    const counter = document.getElementById('charCounter');
+    if (desc && counter) {
+        desc.addEventListener('input', () => {
+            counter.textContent = `${desc.value.length} / 500 characters`;
+        });
+    }
+</script>
+{% endblock %}

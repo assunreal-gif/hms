@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Hostel Waste Management{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+    <!-- Admin Header -->
+    <div class="admin-topbar">
+        <div>
+            <div class="role-pill">🛡️ Administrator Console</div>
+            <h1 class="page-title">Waste Collection Oversight</h1>
+            <p class="page-subtitle">
+                Manage hostel sanitation tickets, assign maintenance crews, and update real-time collection stages.
+            </p>
+        </div>
+        <div class="admin-top-actions">
+            <a href="{{ url_for('report') }}" class="btn btn-primary">
+                <span>➕</span> Log New Request
+            </a>
+            <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+                <span>🔄</span> Refresh Table
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Cards -->
+    <section class="summary-cards-section">
+        <div class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-icon total-icon">📊</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ summary.total }}</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-pending">
+                <div class="stat-icon pending-icon">⏳</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ summary.pending }}</div>
+                    <div class="stat-label">Pending Action</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-assigned">
+                <div class="stat-icon assigned-icon">👷</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ summary.assigned }}</div>
+                    <div class="stat-label">Staff Assigned</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-completed">
+                <div class="stat-icon completed-icon">✅</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ summary.completed }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table Management Section -->
+    <section class="table-section">
+        <div class="table-card">
+            <!-- Filter & Search Toolbar -->
+            <div class="table-toolbar">
+                <div class="filter-group">
+                    <span class="filter-label">Filter Status:</span>
+                    <a href="{{ url_for('admin') }}" class="filter-chip {% if not current_filter %}active{% endif %}">
+                        All ({{ summary.total }})
+                    </a>
+                    <a href="{{ url_for('admin', status='Pending') }}" class="filter-chip chip-pending {% if current_filter == 'Pending' %}active{% endif %}">
+                        Pending ({{ summary.pending }})
+                    </a>
+                    <a href="{{ url_for('admin', status='Assigned') }}" class="filter-chip chip-assigned {% if current_filter == 'Assigned' %}active{% endif %}">
+                        Assigned ({{ summary.assigned }})
+                    </a>
+                    <a href="{{ url_for('admin', status='Collected') }}" class="filter-chip chip-collected {% if current_filter == 'Collected' %}active{% endif %}">
+                        Collected ({{ summary.collected }})
+                    </a>
+                    <a href="{{ url_for('admin', status='Completed') }}" class="filter-chip chip-completed {% if current_filter == 'Completed' %}active{% endif %}">
+                        Completed ({{ summary.completed }})
+                    </a>
+                </div>
+
+                <!-- Search Input Form -->
+                <form action="{{ url_for('admin') }}" method="GET" class="table-search-form">
+                    {% if current_filter %}
+                        <input type="hidden" name="status" value="{{ current_filter }}">
+                    {% endif %}
+                    <div class="search-box-input">
+                        <input 
+                            type="text" 
+                            name="q" 
+                            id="adminSearchInput" 
+                            placeholder="Search location, waste type, ID..." 
+                            value="{{ search_query }}"
+                        >
+                        {% if search_query %}
+                            <a href="{{ url_for('admin', status=current_filter) }}" class="clear-search-btn" title="Clear search">&times;</a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-sm btn-primary">Search</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Requests Table -->
+            <div class="table-responsive">
+                <table class="styled-table" id="requestsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Waste Type</th>
+                            <th>Hostel Location</th>
+                            <th>Description</th>
+                            <th style="width: 100px;">Priority</th>
+                            <th style="width: 150px;">Date / Time</th>
+                            <th style="width: 120px;">Current Status</th>
+                            <th style="width: 220px;" class="text-center">Update Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if requests and requests|length > 0 %}
+                            {% for req in requests %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('track', id=req['id']) }}" class="table-id-link" title="Click to open resident tracking view">
+                                            #{{ req['id'] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="cat-pill">{{ req['waste_type'] }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>📍 {{ req['location'] }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="table-desc" title="{{ req['description'] }}">
+                                            {{ req['description'] }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-priority badge-{{ req['priority']|lower }}">
+                                            {{ req['priority'] }}
+                                        </span>
+                                    </td>
+                                    <td class="table-datetime">
+                                        {{ req['created_at'] }}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-status badge-{{ req['status']|lower }}">
+                                            {{ req['status'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <!-- Inline Status Update Form -->
+                                        <form action="{{ url_for('update_status') }}" method="POST" class="inline-status-form">
+                                            <input type="hidden" name="request_id" value="{{ req['id'] }}">
+                                            <select name="new_status" class="status-select" onchange="this.form.submit()">
+                                                {% for st in valid_statuses %}
+                                                    <option value="{{ st }}" {% if req['status'] == st %}selected{% endif %}>
+                                                        {{ st }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-xs btn-primary update-btn" title="Save Status">Save</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center empty-table-cell">
+                                    <div class="empty-table-state">
+                                        <div class="empty-icon">📭</div>
+                                        <h4>No Waste Requests Found</h4>
+                                        <p>
+                                            {% if current_filter or search_query %}
+                                                No collection records match your current filter criteria.
+                                                <a href="{{ url_for('admin') }}">Reset Filters</a>
+                                            {% else %}
+                                                The database currently has no records. You can report a sample request now!
+                                            {% endif %}
+                                        </p>
+                                        <a href="{{ url_for('report') }}" class="btn btn-primary btn-sm">Report Waste Request</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span class="record-counter">
+                    Showing <strong>{{ requests|length }}</strong> request(s)
+                </span>
+                <span class="db-indicator">
+                    SQLite Database: <code>data/waste_collection.db</code>
+                </span>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
